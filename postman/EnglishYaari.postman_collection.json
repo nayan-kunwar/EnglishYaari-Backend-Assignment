@@ -1,0 +1,397 @@
+{
+  "info": {
+    "name": "EnglishYaari Session Booking API",
+    "description": "End-to-end collection for the EnglishYaari backend assignment. It creates a teacher, a user and a session, then exercises the available, booking, completion and user-history APIs. Collection variables are populated automatically, so the collection can be run repeatedly with Newman or the Postman Collection Runner.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "teacherId", "value": "" },
+    { "key": "teacherEmail", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "userEmail", "value": "" },
+    { "key": "sessionId", "value": "" },
+    { "key": "sessionStart", "value": "" },
+    { "key": "sessionEnd", "value": "" },
+    { "key": "dateTimestamp", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('API reports ok', () => pm.expect(body.data.status).to.eql('ok'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "Create Teacher",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('teacherEmail', `teacher.${Date.now()}@example.com`);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201 Created', () => pm.response.to.have.status(201));",
+              "const body = pm.response.json();",
+              "pm.test('teacher has an id', () => pm.expect(body.data._id).to.be.a('string'));",
+              "pm.collectionVariables.set('teacherId', body.data._id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullName\": \"Rohan Mehta\",\n  \"email\": \"{{teacherEmail}}\",\n  \"specialization\": \"Spoken English\",\n  \"experience\": 8\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/teachers",
+          "host": ["{{baseUrl}}"],
+          "path": ["teachers"]
+        }
+      }
+    },
+    {
+      "name": "Create User",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('userEmail', `user.${Date.now()}@example.com`);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201 Created', () => pm.response.to.have.status(201));",
+              "const body = pm.response.json();",
+              "pm.test('user has an id', () => pm.expect(body.data._id).to.be.a('string'));",
+              "pm.collectionVariables.set('userId', body.data._id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullName\": \"Aarav Sharma\",\n  \"email\": \"{{userEmail}}\",\n  \"phone\": \"+919876543210\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/users",
+          "host": ["{{baseUrl}}"],
+          "path": ["users"]
+        }
+      }
+    },
+    {
+      "name": "Create Session",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const start = new Date();",
+              "start.setUTCDate(start.getUTCDate() + 1);",
+              "start.setUTCHours(10, 0, 0, 0);",
+              "const startMs = start.getTime();",
+              "const endMs = startMs + 60 * 60 * 1000;",
+              "pm.collectionVariables.set('sessionStart', String(startMs));",
+              "pm.collectionVariables.set('sessionEnd', String(endMs));",
+              "pm.collectionVariables.set('dateTimestamp', String(startMs));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201 Created', () => pm.response.to.have.status(201));",
+              "const body = pm.response.json();",
+              "pm.test('session defaults to AVAILABLE', () => pm.expect(body.data.status).to.eql('AVAILABLE'));",
+              "pm.test('session is not assigned to a user', () => pm.expect(body.data.userId).to.eql(null));",
+              "pm.collectionVariables.set('sessionId', body.data._id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"teacherId\": \"{{teacherId}}\",\n  \"startTime\": {{sessionStart}},\n  \"endTime\": {{sessionEnd}}\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/sessions",
+          "host": ["{{baseUrl}}"],
+          "path": ["sessions"]
+        }
+      }
+    },
+    {
+      "name": "Get Available Sessions",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "const sessionId = pm.collectionVariables.get('sessionId');",
+              "pm.test('returns an array', () => pm.expect(body.data).to.be.an('array'));",
+              "pm.test('includes the created session with teacher details', () => {",
+              "  const session = body.data.find((item) => item._id === sessionId);",
+              "  pm.expect(session, 'created session should be available').to.exist;",
+              "  pm.expect(session.status).to.eql('AVAILABLE');",
+              "  pm.expect(session.teacher).to.be.an('object');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/sessions/available?dateTimestamp={{dateTimestamp}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["sessions", "available"],
+          "query": [
+            { "key": "dateTimestamp", "value": "{{dateTimestamp}}" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Book Session",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('status is BOOKED', () => pm.expect(body.data.status).to.eql('BOOKED'));",
+              "pm.test('session is linked to the user', () => pm.expect(body.data.userId).to.eql(pm.collectionVariables.get('userId')));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"{{userId}}\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/sessions/{{sessionId}}/book",
+          "host": ["{{baseUrl}}"],
+          "path": ["sessions", "{{sessionId}}", "book"]
+        }
+      }
+    },
+    {
+      "name": "Book Session Again (409)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
+              "pm.test('session can no longer be booked', () => pm.expect(pm.response.json().message).to.match(/status is BOOKED/i));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"{{userId}}\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/sessions/{{sessionId}}/book",
+          "host": ["{{baseUrl}}"],
+          "path": ["sessions", "{{sessionId}}", "book"]
+        }
+      }
+    },
+    {
+      "name": "Complete Session",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('status is COMPLETED', () => pm.expect(body.data.status).to.eql('COMPLETED'));",
+              "pm.test('completedAt is set', () => pm.expect(body.data.completedAt).to.be.a('string'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/sessions/{{sessionId}}/complete",
+          "host": ["{{baseUrl}}"],
+          "path": ["sessions", "{{sessionId}}", "complete"]
+        }
+      }
+    },
+    {
+      "name": "Get User Sessions",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "const sessionId = pm.collectionVariables.get('sessionId');",
+              "pm.test('response has both groups', () => {",
+              "  pm.expect(body.data.upcomingSessions).to.be.an('array');",
+              "  pm.expect(body.data.completedSessions).to.be.an('array');",
+              "});",
+              "pm.test('completed session appears in completedSessions', () => {",
+              "  const session = body.data.completedSessions.find((item) => item._id === sessionId);",
+              "  pm.expect(session, 'completed session should be returned').to.exist;",
+              "  pm.expect(session.status).to.eql('COMPLETED');",
+              "  pm.expect(session.teacher).to.be.an('object');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/users/{{userId}}/sessions",
+          "host": ["{{baseUrl}}"],
+          "path": ["users", "{{userId}}", "sessions"]
+        }
+      }
+    },
+    {
+      "name": "Create Duplicate User (409)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
+              "pm.test('duplicate email is rejected', () => pm.expect(pm.response.json().message).to.match(/already exists/i));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullName\": \"Duplicate User\",\n  \"email\": \"{{userEmail}}\",\n  \"phone\": \"+919876543211\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/users",
+          "host": ["{{baseUrl}}"],
+          "path": ["users"]
+        }
+      }
+    },
+    {
+      "name": "Available Sessions - Invalid Date (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+              "pm.test('validation error is returned', () => pm.expect(pm.response.json().errors).to.be.an('array'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/sessions/available?dateTimestamp=not-a-date",
+          "host": ["{{baseUrl}}"],
+          "path": ["sessions", "available"],
+          "query": [
+            { "key": "dateTimestamp", "value": "not-a-date" }
+          ]
+        }
+      }
+    }
+  ]
+}

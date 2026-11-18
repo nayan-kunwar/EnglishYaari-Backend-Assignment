@@ -1,0 +1,20 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: englishyaari-mongo
+    restart: unless-stopped
+    ports:
+      # Host port 27018 avoids clashing with a locally installed MongoDB on 27017.
+      # Override with MONGO_PORT if needed, and update MONGODB_URI in .env to match.
+      - '${MONGO_PORT:-27018}:27017'
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  mongo-data:
